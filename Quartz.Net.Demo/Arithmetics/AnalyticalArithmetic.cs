@@ -15,7 +15,6 @@ namespace Quartz.Net.Arithmetics
 
         //需要处理的文本数据
         public List<string> listStr { get; set; }
-
         /// <summary>
         /// 根据得到的文本返回符合要求的数据集合
         /// </summary>
@@ -24,7 +23,6 @@ namespace Quartz.Net.Arithmetics
         {
             lock (this)
             {
-                RedisDal dal = new RedisDal();
                 List<LogEntity> logList = new List<LogEntity>();
                 //定义正则表达式
                 string pattern = @"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}),\d{3} \[\d+] [A-Z]+ .* - Request .* (\{.*}) ([a-z]+|[a-z]+/[a-z]+)";
@@ -55,7 +53,6 @@ namespace Quartz.Net.Arithmetics
                         logList.Add(new LogEntity(Convert.ToDateTime(match.Groups[1].Value), match.Groups[2].Value, match.Groups[3].Value, hospid, phone));
                     }
                 }
-                dal.Dispose();
                 return logList;
             }
         }
@@ -65,12 +62,20 @@ namespace Quartz.Net.Arithmetics
         {
             lock (this)
             {
-                //根据问本行公共区的到需要处理的数据，并清空公共区（消费）
-                List<LogEntity> list = GetLogEntitys();
+                try
+                {
+                    //根据问本行公共区的到需要处理的数据，并清空公共区（消费）
+                    List<LogEntity> list = GetLogEntitys();
 
-                HospPhoneStatistics(list);
-                //执行获取手机短讯接口调用查询方法
-                PhoneSendCounts(list);
+                    HospPhoneStatistics(list);
+                    //执行获取手机短讯接口调用查询方法
+                    PhoneSendCounts(list);
+
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
             }
         }
 

@@ -97,5 +97,11 @@
   <ItemGroup>
     <Folder Include="bin\Debug\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Quartz.Net.Demo\Quartz.Net.csproj">
+      <Project>{f71d63f0-e6fc-48ec-9b45-7882ce8f8e4a}</Project>
+      <Name>Quartz.Net</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

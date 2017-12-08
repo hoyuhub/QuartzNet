@@ -72,6 +72,7 @@
   <ItemGroup>
     <Compile Include="Arithmetics\AnalyticalArithmetic.cs" />
     <Compile Include="Arithmetics\ReadArithmetic.cs" />
+    <Compile Include="Arithmetics\ReadTaskArithmetic.cs" />
     <Compile Include="Commons.cs" />
     <Compile Include="Demo\DemoJob1.cs" />
     <Compile Include="Demo\DemoJob2.cs" />

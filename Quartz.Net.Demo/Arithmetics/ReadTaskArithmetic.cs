@@ -1,35 +1,28 @@
-﻿using log4net;
-using Quartz.Net.Redis;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
+using log4net;
+using Quartz.Net.Redis;
+using System.IO;
+using System.Threading.Tasks;
+using System.Configuration;
+using System.Diagnostics;
 using System.Threading;
 
 namespace Quartz.Net.Arithmetics
 {
-    public static class ReadArithmetic
+    public class ReadTaskArithmetic
     {
+        //创建日志对象
         private static readonly ILog logger = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
-
-        //日志文件路路径,传入或者以配置文件的形式读取
+        //获取解析文件路径
         private static string path = ConfigurationManager.AppSettings["LogFilePath"];
-
-        /// <summary>
-        /// 从指定位置
-        /// 获取一百行数据
-        /// </summary>
-        /// <param name="path">文件路径</param>
-        /// <returns></returns>
         public static void ListLine()
         {
             //开始本次服务时间计算
             Stopwatch st = new Stopwatch();
             st.Start();
-
             logger.Info("=====开始读取数据=====");
 
             try
@@ -38,8 +31,6 @@ namespace Quartz.Net.Arithmetics
                 {
                     using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
-                        //设置线程池中最多有20个线程
-                        ThreadPool.SetMaxThreads(20, 20);
                         //获取上次文件流结束位置（若旧流位置大于新流长度则视为新文件，流位置初始化）
                         RedisDal dal = new RedisDal();
                         long oldPosition = dal.GetFilePosition();
@@ -56,6 +47,7 @@ namespace Quartz.Net.Arithmetics
                         {
                             string line = string.Empty;
                             List<string> listStr = new List<string>();
+                            List<Task> listTask = new List<Task>();
                             long length = fs.Length;
                             while (true)
                             {
@@ -67,7 +59,9 @@ namespace Quartz.Net.Arithmetics
                                         dal.SetFilePosition(fs.Position.ToString());
                                         AnalyticalArithmetic anal = new AnalyticalArithmetic();
                                         anal.listStr = listStr.ToList();
-                                        //  ThreadPool.QueueUserWorkItem(new WaitCallback(anal.AllFun));
+                                        Task t = new Task(() => anal.AllFun(123));
+                                        listTask.Add(t);
+                                        t.Start();
                                         listStr.Clear();
                                     }
                                     listStr.Add(line);
@@ -84,11 +78,19 @@ namespace Quartz.Net.Arithmetics
                             dal.SetFilePosition(fs.Position.ToString());
                             dal.Dispose();
 
-                            AnalyticalArithmetic analytickal = new AnalyticalArithmetic();
-                            analytickal = new AnalyticalArithmetic();
-                            analytickal.listStr = listStr.ToList();
-                            //  ThreadPool.QueueUserWorkItem(new WaitCallback(analytickal.AllFun));
+                            if (listStr.Count > 0)
+                            {
+                                AnalyticalArithmetic analytickal = new AnalyticalArithmetic();
+                                analytickal = new AnalyticalArithmetic();
+                                analytickal.listStr = listStr.ToList();
 
+                                Task tt = new Task(() => analytickal.AllFun(1));
+                                listTask.Add(tt);
+                                tt.Start();
+                                listStr.Clear();
+                                Console.WriteLine(listTask.Count);
+                                Task.WaitAll(listTask.ToArray());
+                            }
                         }
 
                         logger.Info("=====本次服务结束=====");
@@ -103,12 +105,12 @@ namespace Quartz.Net.Arithmetics
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 logger.Error("服务发生异常：" + ex);
             }
 
 
         }
-
 
     }
 }
